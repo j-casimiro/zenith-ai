@@ -1,5 +1,5 @@
 // API base URL
-export const API_URL = 'http://127.0.0.1:8000';
+export const API_URL = process.env.NEXT_PUBLIC_FASTAPI_URL;
 
 // Register a new user
 export async function register({
@@ -109,15 +109,14 @@ export function getGoogleAuthLoginUrl() {
 
 // Google Auth Callback (exchange code for app tokens)
 export async function googleAuthCallback(code: string) {
-  const res = await fetch(
-    `${API_URL}/auth/google/callback?code=${encodeURIComponent(code)}`,
-    {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-      },
-      credentials: 'include', // set refresh_token cookie
-    }
-  );
+  const res = await fetch(`${API_URL}/auth/google/callback`, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ code }),
+    credentials: 'include', // set refresh_token cookie
+  });
   return res.json();
 }

@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  console.log('Cookies:', request.cookies.getAll());
-  // Example: check for access_token in cookies
   const token = request.cookies.get('access_token')?.value;
 
   // If authenticated, prevent access to login/register

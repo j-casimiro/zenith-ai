@@ -27,7 +27,6 @@ export default function WorkspacePage() {
       const response = await validate(token);
       if (response.valid) {
         const user = await getCurrentUser(token);
-        console.log(user);
         setUserName(user?.name || 'User');
         setIsAuthenticated(true);
       } else {
@@ -36,8 +35,7 @@ export default function WorkspacePage() {
       }
     }
     checkAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router]);
 
   if (isAuthenticated === null) {
     return <Loading />;

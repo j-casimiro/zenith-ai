@@ -23,7 +23,11 @@ interface HistoryItem {
 const INITIAL_CHAT: ChatMessage[] = [];
 const SIDEBAR_HISTORY: HistoryItem[] = [];
 
-function ChatWorkspace({ userName = 'John Doe' }: { userName?: string }) {
+export function ChatWorkspace({
+  userName = 'John Doe',
+}: {
+  userName?: string;
+}) {
   // State management
   const [chat, setChat] = useState<ChatMessage[]>(INITIAL_CHAT);
   const [input, setInput] = useState('');
