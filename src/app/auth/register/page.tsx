@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { register } from '../../../../lib/api';
+import { register } from '../../../lib/api';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({

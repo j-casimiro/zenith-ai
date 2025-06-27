@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { login } from '../../../../lib/api';
+import { login } from '../../../lib/api';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -57,7 +57,7 @@ export default function LoginPage() {
           response.access_token
         }; path=/; max-age=${60 * 60 * 24 * 7}`;
         // Redirect to dashboard or home
-        router.push('/');
+        router.push('/workspace');
       } else {
         setErrors({ general: response.detail || 'Login failed' });
       }

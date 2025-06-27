@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-// import Link from 'next/link';
 import { Menu, X, User, LogOut, Plus, MessageSquare } from 'lucide-react';
-import { logout } from '../../lib/api';
+import { logout } from '../lib/api';
 
 // Types
 interface ChatMessage {
@@ -22,14 +21,9 @@ interface HistoryItem {
 
 // Placeholder data
 const INITIAL_CHAT: ChatMessage[] = [];
-
 const SIDEBAR_HISTORY: HistoryItem[] = [];
 
-export default function AuthenticatedHome({
-  userName = 'John Doe',
-}: {
-  userName?: string;
-}) {
+function ChatWorkspace({ userName = 'John Doe' }: { userName?: string }) {
   // State management
   const [chat, setChat] = useState<ChatMessage[]>(INITIAL_CHAT);
   const [input, setInput] = useState('');
@@ -497,7 +491,7 @@ function MarkdownRenderer({ children }: { children: string }) {
         )
         // Lists
         .replace(/^\d+\.\s+(.*$)/gm, '<li class="ml-4 mb-1">$1</li>')
-        .replace(/^-\s+(.*$)/gm, '<li class="ml-4 mb-1 list-disc">$1</li>')
+        .replace(/^\-\s+(.*$)/gm, '<li class="ml-4 mb-1 list-disc">$1</li>')
         // Line breaks
         .replace(/\n\n/g, '</p><p class="mb-3">')
         .replace(/\n/g, '<br/>')
@@ -513,3 +507,5 @@ function MarkdownRenderer({ children }: { children: string }) {
     />
   );
 }
+
+export default ChatWorkspace;
