@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zenith-AI
+
+Zenith-AI is a modern web application that leverages advanced AI to condense lengthy documents into digestible summaries, saving you time and enhancing comprehension. With a clean, intuitive interface and powerful summarization features, Zenith-AI helps you read faster, understand more, and keep your knowledge organized.
+
+## Features
+
+- **AI-Powered Summarization:** Instantly distill long texts into concise, actionable summaries.
+- **Key Point Extraction:** Understand the most important concepts at a glance.
+- **Effortless Organization:** Keep your summaries organized and accessible in your workspace.
+- **User Authentication:** Secure login and registration to protect your data.
+- **Responsive Design:** Beautiful, modern UI that works on any device.
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+# or
+yarn install
+```
+
+### 2. Run the Development Server
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to use Zenith-AI.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Register** for a new account or **log in** with your credentials.
+2. **Paste** your document into the workspace.
+3. Click **Summarize** to generate an AI-powered summary and key points.
+4. **Review** and **organize** your summaries for future reference.
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app/page.tsx`: Landing page with authentication check and feature highlights.
+- `src/app/workspace/page.tsx`: Main workspace for document summarization.
+- `src/app/components/Loading.tsx`: Shared loading spinner component.
+- `src/app/auth/`: Authentication pages (login, register).
+- `src/app/ChatWorkspace.tsx`: Core chat and summarization UI logic.
+- `src/lib/api.ts`: API helpers for authentication and user management.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Technologies Used
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Next.js** (App Router)
+- **React**
+- **TypeScript**
+- **Tailwind CSS**
 
-## Deploy on Vercel
+## Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Contributions are welcome! Please open an issue or submit a pull request with improvements or bug fixes.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+This project is open source.
