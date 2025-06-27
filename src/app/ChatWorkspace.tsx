@@ -298,6 +298,22 @@ export function ChatWorkspace({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Close the open menu when clicking outside
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleClick(e: MouseEvent) {
+      // Close menu if click is outside any menu
+      const menus = document.querySelectorAll('.history-menu-dropdown');
+      let clickedInside = false;
+      menus.forEach((menu) => {
+        if (menu.contains(e.target as Node)) clickedInside = true;
+      });
+      if (!clickedInside) setOpenMenuId(null);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [openMenuId]);
+
   return (
     <div className="font-inter h-screen flex bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Mobile Sidebar Overlay */}
@@ -431,7 +447,7 @@ export function ChatWorkspace({
                       </svg>
                     </button>
                     {openMenuId === item.id && (
-                      <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded shadow-lg z-50">
+                      <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded shadow-lg z-50 history-menu-dropdown">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
