@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Menu, X, User, LogOut, Plus, MessageSquare } from 'lucide-react';
 import { logout } from '../lib/api';
 
@@ -21,7 +21,6 @@ interface HistoryItem {
 
 // Placeholder data
 const INITIAL_CHAT: ChatMessage[] = [];
-const SIDEBAR_HISTORY: HistoryItem[] = [];
 
 export function ChatWorkspace({
   userName = 'John Doe',
@@ -36,6 +35,8 @@ export function ChatWorkspace({
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(
     null
   );
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -54,46 +55,135 @@ export function ChatWorkspace({
     }
   }, [input]);
 
+  // Helper to get cookie value by name
+  function getCookie(name: string) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+    return '';
+  }
+
+  // Fetch summarization history
+  const fetchHistory = useCallback(async () => {
+    setIsHistoryLoading(true);
+    try {
+      const access_token = getCookie('access_token');
+      if (!access_token) {
+        setHistoryItems([]);
+        setIsHistoryLoading(false);
+        return;
+      }
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_FASTAPI_URL}/summaries`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        // Assume data is an array of history items
+        setHistoryItems(data);
+      } else {
+        setHistoryItems([]);
+      }
+    } catch {
+      setHistoryItems([]);
+      // Optionally set an error state here
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
   // Handler for sending a new message (summarize)
   const handleSummarize = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim()) return;
 
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
       sender: 'user',
       text: input,
       timestamp: new Date(),
     };
-
-    setChat((prev) => [...prev, userMessage]);
+    setChat((prev) => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
 
-    // Simulate AI processing delay
-    setTimeout(() => {
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'ai',
-        text: `**AI Summary Generated:**
+    try {
+      const access_token = getCookie('access_token');
+      if (!access_token) {
+        setChat((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            sender: 'ai',
+            text: 'Authentication error: No access token found. Please log in again.',
+            timestamp: new Date(),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
 
-**Key Points Extracted:**
-- Document contains ${input.split(' ').length} words
-- Main topics identified and analyzed
-- Important concepts highlighted and structured
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_FASTAPI_URL}/summarize_document`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify({ text: input }),
+        }
+      );
 
-**Summary:**
-This is a comprehensive summary of your document. The AI has analyzed the content and extracted the most relevant information, organizing it into digestible sections for easy understanding.
-
-**Recommendations:**
-- Consider the main themes presented
-- Review the key takeaways for actionable insights
-- Use this summary for quick reference`,
-        timestamp: new Date(),
-      };
-
-      setChat((prev) => [...prev, aiMessage]);
+      if (response.ok) {
+        const data = await response.json();
+        setChat((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            sender: 'ai',
+            text: data.summary,
+            timestamp: new Date(),
+          },
+        ]);
+        // Refresh history after successful summarization
+        fetchHistory();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setChat((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            sender: 'ai',
+            text: `Summarization failed: ${
+              errorData.detail || response.statusText
+            }`,
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } catch (error) {
+      const err = error as Error;
+      setChat((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          sender: 'ai',
+          text: `Summarization failed: ${err.message || 'Network error.'}`,
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   // Handler for starting new chat
@@ -109,10 +199,43 @@ This is a comprehensive summary of your document. The AI has analyzed the conten
   };
 
   // Handler for selecting history item
-  const handleSelectHistory = (historyId: string) => {
+  const handleSelectHistory = async (historyId: string) => {
     setSelectedHistoryId(historyId);
-    // In a real app, you would load the chat history for this item
     setSidebarOpen(false);
+
+    const access_token = getCookie('access_token');
+    if (!access_token) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_FASTAPI_URL}/summaries/${historyId}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setChat([
+          {
+            id: crypto.randomUUID(),
+            sender: 'user',
+            text: data.original_text,
+            timestamp: new Date(data.timestamp),
+          },
+          {
+            id: crypto.randomUUID(),
+            sender: 'ai',
+            text: data.summary_text,
+            timestamp: new Date(data.timestamp),
+          },
+        ]);
+      }
+    } catch {
+      // Optionally handle error
+    }
   };
 
   // Handler for logging out
@@ -212,38 +335,50 @@ This is a comprehensive summary of your document. The AI has analyzed the conten
             Recent Summaries
           </h3>
           <div className="space-y-2">
-            {SIDEBAR_HISTORY.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleSelectHistory(item.id)}
-                className={`
-                  w-full text-left p-3 rounded-xl transition-colors
-                  ${
-                    selectedHistoryId === item.id
-                      ? 'bg-slate-100 border border-slate-200'
-                      : 'hover:bg-slate-50'
-                  }
-                `}
-              >
-                <div className="flex items-start gap-2">
-                  <MessageSquare
-                    size={16}
-                    className="text-slate-400 mt-0.5 flex-shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm text-slate-900 truncate">
-                      {item.title}
-                    </div>
-                    <div className="text-xs text-slate-500 mt-1 line-clamp-2">
-                      {item.preview}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">
-                      {item.timestamp.toLocaleDateString()}
+            {isHistoryLoading ? (
+              <div className="text-slate-400 text-sm px-2 py-4">
+                Loading history...
+              </div>
+            ) : historyItems.length === 0 ? (
+              <div className="text-slate-400 text-sm px-2 py-4">
+                No summaries found.
+              </div>
+            ) : (
+              historyItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelectHistory(item.id)}
+                  className={`
+                    w-full text-left p-3 rounded-xl transition-colors
+                    ${
+                      selectedHistoryId === item.id
+                        ? 'bg-slate-100 border border-slate-200'
+                        : 'hover:bg-slate-50'
+                    }
+                  `}
+                >
+                  <div className="flex items-start gap-2">
+                    <MessageSquare
+                      size={16}
+                      className="text-slate-400 mt-0.5 flex-shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm text-slate-900 truncate">
+                        {item.title}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1 line-clamp-2">
+                        {item.preview}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1">
+                        {item.timestamp instanceof Date
+                          ? item.timestamp.toLocaleDateString()
+                          : new Date(item.timestamp).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))
+            )}
           </div>
         </div>
 

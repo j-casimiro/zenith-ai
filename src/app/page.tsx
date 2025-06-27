@@ -89,7 +89,7 @@ export default function LandingPage() {
           Summarize Smarter, Read Faster
         </h1>
         <p className="text-lg md:text-xl text-gray-700 max-w-2xl mb-8">
-          Leveraging advanced AI, Zenith-AI condenses lengthy documents into
+          Leveraging advanced AI, Zenith-AI condenses lengthy text into
           digestible summaries, saving you time and enhancing comprehension.
         </p>
         <div className="flex gap-4 justify-center mb-10">

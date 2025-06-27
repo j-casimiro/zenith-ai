@@ -1,6 +1,6 @@
 # Zenith-AI
 
-Zenith-AI is a modern web application that leverages advanced AI to condense lengthy documents into digestible summaries, saving you time and enhancing comprehension. With a clean, intuitive interface and powerful summarization features, Zenith-AI helps you read faster, understand more, and keep your knowledge organized.
+Zenith-AI is a modern web application that leverages advanced AI to condense lengthy text into digestible summaries, saving you time and enhancing comprehension. With a clean, intuitive interface and powerful summarization features, Zenith-AI helps you read faster, understand more, and keep your knowledge organized.
 
 ## Features
 
@@ -33,14 +33,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to use Zenit
 ## Usage
 
 1. **Register** for a new account or **log in** with your credentials.
-2. **Paste** your document into the workspace.
+2. **Paste** your text into the workspace.
 3. Click **Summarize** to generate an AI-powered summary and key points.
 4. **Review** and **organize** your summaries for future reference.
 
 ## Project Structure
 
 - `src/app/page.tsx`: Landing page with authentication check and feature highlights.
-- `src/app/workspace/page.tsx`: Main workspace for document summarization.
+- `src/app/workspace/page.tsx`: Main workspace for text summarization.
 - `src/app/components/Loading.tsx`: Shared loading spinner component.
 - `src/app/auth/`: Authentication pages (login, register).
 - `src/app/ChatWorkspace.tsx`: Core chat and summarization UI logic.
