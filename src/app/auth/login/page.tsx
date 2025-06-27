@@ -52,8 +52,10 @@ export default function LoginPage() {
       });
 
       if (response.access_token) {
-        // Store the access token (you might want to use a more secure method)
-        localStorage.setItem('access_token', response.access_token);
+        // Store the access token in a cookie (expires in 7 days)
+        document.cookie = `access_token=${
+          response.access_token
+        }; path=/; max-age=${60 * 60 * 24 * 7}`;
         // Redirect to dashboard or home
         router.push('/');
       } else {

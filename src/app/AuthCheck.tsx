@@ -1,17 +1,27 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { validate } from '../../lib/api';
+import { validate, getCurrentUser } from '../../lib/api';
 import AuthenticatedHome from './AuthenticatedHome';
 
 export default function AuthCheck() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [userName] = useState<string>('User');
+  const [userName, setUserName] = useState<string>('User');
 
   useEffect(() => {
+    // Helper to get cookie value by name
+    function getCookie(name: string) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+    }
+    // Helper to remove cookie by name
+    function removeCookie(name: string) {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    }
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = getCookie('access_token');
         if (!token) {
           setIsAuthenticated(false);
           return;
@@ -21,16 +31,18 @@ export default function AuthCheck() {
         const response = await validate(token);
 
         if (response.valid) {
+          // Fetch user details
+          const user = await getCurrentUser(token);
+          setUserName(user?.name || 'User');
           setIsAuthenticated(true);
-          // You could also fetch user details here if needed
         } else {
           // Token is invalid, remove it
-          localStorage.removeItem('access_token');
+          removeCookie('access_token');
           setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('Authentication check failed:', error);
-        localStorage.removeItem('access_token');
+        removeCookie('access_token');
         setIsAuthenticated(false);
       }
     };
