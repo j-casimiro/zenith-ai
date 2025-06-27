@@ -37,6 +37,7 @@ export function ChatWorkspace({
   );
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -132,7 +133,7 @@ export function ChatWorkspace({
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_FASTAPI_URL}/summarize_document`,
+        `${process.env.NEXT_PUBLIC_FASTAPI_URL}/summarize_text`,
         {
           method: 'POST',
           headers: {
@@ -235,6 +236,35 @@ export function ChatWorkspace({
       }
     } catch {
       // Optionally handle error
+    }
+  };
+
+  // Handler for deleting a summary
+  const handleDeleteHistory = async (historyId: string) => {
+    const access_token = getCookie('access_token');
+    if (!access_token) return;
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_FASTAPI_URL}/summaries/${historyId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+      if (response.ok) {
+        // Remove from historyItems
+        setHistoryItems((prev) => prev.filter((item) => item.id !== historyId));
+        // If the deleted summary is currently open, clear the chat
+        if (selectedHistoryId === historyId) {
+          setChat([]);
+          setSelectedHistoryId(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete summary:', error);
+      // Optionally, set an error state or show a notification to the user
     }
   };
 
@@ -345,38 +375,77 @@ export function ChatWorkspace({
               </div>
             ) : (
               historyItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelectHistory(item.id)}
-                  className={`
-                    w-full text-left p-3 rounded-xl transition-colors
-                    ${
-                      selectedHistoryId === item.id
-                        ? 'bg-slate-100 border border-slate-200'
-                        : 'hover:bg-slate-50'
-                    }
-                  `}
-                >
-                  <div className="flex items-start gap-2">
-                    <MessageSquare
-                      size={16}
-                      className="text-slate-400 mt-0.5 flex-shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-sm text-slate-900 truncate">
-                        {item.title}
-                      </div>
-                      <div className="text-xs text-slate-500 mt-1 line-clamp-2">
-                        {item.preview}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">
-                        {item.timestamp instanceof Date
-                          ? item.timestamp.toLocaleDateString()
-                          : new Date(item.timestamp).toLocaleDateString()}
+                <div key={item.id} className="relative group">
+                  <button
+                    onClick={() => handleSelectHistory(item.id)}
+                    className={`
+                      w-full text-left p-3 rounded-xl transition-colors pr-10
+                      ${
+                        selectedHistoryId === item.id
+                          ? 'bg-slate-100 border border-slate-200'
+                          : 'hover:bg-slate-50'
+                      }
+                    `}
+                  >
+                    <div className="flex items-start gap-2">
+                      <MessageSquare
+                        size={16}
+                        className="text-slate-400 mt-0.5 flex-shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-sm text-slate-900 truncate">
+                          {item.title}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1 line-clamp-2">
+                          {item.preview}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-1">
+                          {item.timestamp instanceof Date
+                            ? item.timestamp.toLocaleDateString()
+                            : new Date(item.timestamp).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
+                  </button>
+                  {/* Three dots menu */}
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId(openMenuId === item.id ? null : item.id);
+                      }}
+                      className="p-1 rounded hover:bg-slate-200 text-slate-500 focus:outline-none focus:ring-2 focus:ring-black"
+                      aria-haspopup="true"
+                      aria-expanded={openMenuId === item.id}
+                      aria-label="Open menu"
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="5" cy="12" r="2" fill="currentColor" />
+                        <circle cx="12" cy="12" r="2" fill="currentColor" />
+                        <circle cx="19" cy="12" r="2" fill="currentColor" />
+                      </svg>
+                    </button>
+                    {openMenuId === item.id && (
+                      <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded shadow-lg z-50">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(null);
+                            handleDeleteHistory(item.id);
+                          }}
+                          className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </button>
+                </div>
               ))
             )}
           </div>
@@ -417,10 +486,10 @@ export function ChatWorkspace({
             </button>
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-slate-900">
-                Document Summarizer
+                Text Summarizer
               </h1>
               <p className="text-sm text-slate-500 mt-1">
-                Paste your document below to get an AI-powered summary
+                Paste your text below to get an AI-powered summary
               </p>
             </div>
           </div>
@@ -446,7 +515,7 @@ export function ChatWorkspace({
                 Ready to summarize
               </h3>
               <p className="text-gray-500 mb-6">
-                Paste your document in the text area below and I will create a
+                Paste your text in the text area below and I will create a
                 comprehensive summary for you.
               </p>
             </div>
@@ -524,7 +593,7 @@ export function ChatWorkspace({
                             style={{ animationDelay: '0.2s' }}
                           />
                         </div>
-                        <span className="text-sm">Analyzing document...</span>
+                        <span className="text-sm">Analyzing text...</span>
                       </div>
                     </div>
                   </div>
@@ -548,7 +617,7 @@ export function ChatWorkspace({
               <textarea
                 ref={textareaRef}
                 className="w-full rounded-2xl border border-gray-300 p-4 pr-24 text-base resize-none focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white shadow-sm min-h-[120px] max-h-[300px]"
-                placeholder="Paste your document here for summarization..."
+                placeholder="Paste your text here for summarization..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading}
